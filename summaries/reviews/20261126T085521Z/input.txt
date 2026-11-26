@@ -1,0 +1,76 @@
+You are an independent mathematical reviewer. Use only the target, allowed facts,
+and frozen sketch below. Do not call tools, browse, or seek the original Lean proof.
+
+For each numbered gap, give a checkable informal proof or identify the first precise obstruction.
+Then check whether the proved gaps and allowed facts imply the target, including all hypotheses,
+quantifiers, and numerical estimates. Report each gap as proved, conditional, or unproved;
+report separately whether the whole argument closes. Do not claim success for an unproved gap.
+
+TARGET
+For every positive modulus q, Dirichlet character χ modulo q, and complex ρ with Re ρ > 1/2,
+L(ρ, χ) is nonzero unless χ is principal and ρ = 1.
+
+ALLOWED FACTS
+# Allowed facts for the root sketch of `New.grh`
+
+The target is `DirichletLNonvanishingRightOfHalf`: for every positive modulus `q`, Dirichlet character `χ` modulo `q`, and complex `ρ` with `Re ρ > 1/2`, the value `L(ρ, χ)` is nonzero unless `χ` is principal and `ρ = 1`.
+
+The reviewer may use the following prerequisite, which is already proved in `src/New/Endgame/OneSidedCriterion.lean`:
+
+- `entireL_ne_zero_of_primeError_le`: for a modulus `M`, a unit residue class `a` modulo `M`, and `β > 1/2`, suppose every prime `d` in class `a` is `7 mod 8` and coprime to `M`, and for each such `d` the one-sided error `primeError d M x` is eventually at most `x^(β-1)`. Then the entire Dirichlet L-function attached to any character modulo `M` has no zeros with real part greater than `β`.
+
+The reviewer may also use standard facts about changing a Dirichlet character to a multiple of its modulus: the resulting L-function differs by finitely many Euler factors, which do not create zeros in `Re ρ > 1/2` away from the stated pole; and the elementary arithmetic of the residue class `9240 q - 1` modulo `18480 q`.
+
+The one-sided prime error bound `eventually_primeError_le_rpow`, the main inequality `star_inequality`, and the target `New.grh` are **not** allowed facts. If needed, state their necessary content as gaps, with all parameters and hypotheses.
+
+
+FROZEN SKETCH
+\documentclass{article}
+\usepackage{amsmath,amssymb}
+\begin{document}
+\title{Nonvanishing of Dirichlet \(L\)-functions to the Right of One Half}
+\author{}
+\date{}
+\maketitle
+
+\section*{Main line}
+The target is \(L(\rho,\chi)\ne0\) whenever \(\Re\rho>1/2\), except when \(\chi\) is principal and \(\rho=1\). Write \(R_M(y)\) for the one-sided prime error attached to a prime \(d\) and modulus \(M\).
+
+Fix \(q,\chi,\rho\), and put
+\[
+ M=18480q,\qquad a=9240q-1,\qquad
+ \varepsilon=\frac{\min(\Re\rho,1)-1/2}{51},\qquad
+ \beta=\frac12+8\varepsilon .
+\]
+Then \(0<\varepsilon<1/100\) and \(1/2<\beta<\Re\rho\). Every prime \(d\equiv a\pmod M\) has the required arithmetic properties and gives parameters for Gaps 1 and 2. Those gaps yield, eventually,
+\(R_M(x)\le x^{\beta-1}\). The allowed one-sided criterion makes the entire \(L\)-function of the character induced to modulus \(M\) nonzero at \(\rho\). Changing modulus and removing its finite Euler factors gives the target.
+
+\section*{Gaps to prove independently}
+\noindent\textbf{Gap 1.} Let \(M\) be a positive multiple of \(18480\), and let \(d\) be prime with \(M\mid2(d+1)\) but \(M\nmid d+1\). For any admissible geometric datum with scales \(x,x_1,b\), number of lifts \(m\), order \(A\), number of places \(f\), \(H>0\) thick places, and \(T>0\) top places, set
+\[
+ \mathcal B=fA(\log b)^3,\qquad
+ \mathrm{rem}=AH\left(R_M(x)-R_M(x_1)+\frac TH R_1(x_1)\right).
+\]
+Prove \(m\,\mathrm{rem}\le(\log b)^2\mathcal B\). This is the covolume step: construct sufficiently many short lifts, bound their index, and compare the upper covolume bound with the product-formula lower bound. The common main height cancels, leaving the displayed inequality.
+
+\medskip
+\noindent\textbf{Gap 2.} For every \(M,d\) as in Gap 1 and every \(0<\varepsilon<1/100\), prove that every sufficiently large \(x\) has an admissible datum as above satisfying
+\[
+ m\ge\sqrt{x},\qquad \log b=x^\varepsilon,\qquad
+ \frac fH\le\varphi(M)\log b,\qquad
+ R_M(x_1)-\frac THR_1(x_1)\le x^{-10^6}.
+\]
+Establish the last bound by finding \(\log x_1\) in
+\([10^6\log x,(10^6\log x)^2]\) where the indicated combination is small; the prime-error transforms supply the needed polar window argument. This gap enters after Gap 1: division by \(mAH\) gives
+\[
+ R_M(x)\le
+ \frac{f(\log b)^5}{mH}+x^{-10^6}
+ \le x^{8\varepsilon-1/2}
+\]
+for sufficiently large \(x\).
+
+\section*{Allowed facts}
+The one-sided prime-error criterion, finite Euler-factor behavior under change of modulus, and the elementary arithmetic of \(a\bmod M\) stated in the question.
+
+\end{document}
+

@@ -1,0 +1,14 @@
+{
+  "schema": "isolated-sketch-review/v1",
+  "sketch_sha256": "9fd8a6c8730d1a790d734d18147ab56a5662a58fd66698e74db96b68a7f6ca6e",
+  "facts_sha256": "6588dd6d42134801509d02a58ef0ea7877a65b0659ffc2d854ed093e5eafab8b",
+  "input_sha256": "827fa50c31bb4e68befb98b28c781a0c3a90c619e8beeb2b8f2fe5c62440252d",
+  "docker_image": "python:3.12-slim",
+  "filesystem_probe_passed": true,
+  "exit_code": 0,
+  "turn_completed": true,
+  "tool_item_types": [
+    "error"
+  ],
+  "authentication_mounted_inside_container": true
+}

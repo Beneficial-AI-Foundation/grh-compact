@@ -10,6 +10,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from check_sketch_words import count_words
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PROMPT = ROOT / "scripts/prompts/latex_sketch_summarizer.md"
@@ -64,6 +66,9 @@ def main() -> None:
         sketch = draft.read_text(encoding="utf-8").strip()
         if not sketch.startswith("\\documentclass") or "\\end{document}" not in sketch:
             raise ValueError("summarizer did not produce a complete LaTeX document")
+        word_count = count_words(sketch)
+        if word_count > 500:
+            raise ValueError(f"sketch exceeds 500 English prose words: {word_count}")
         if sha256(source.read_bytes()) != source_hash:
             raise RuntimeError("source changed while the summarizer was running")
 
@@ -76,6 +81,7 @@ def main() -> None:
         "source_sha256": source_hash,
         "prompt_sha256": sha256(prompt_bytes),
         "sketch_sha256": sha256(output.read_bytes()),
+        "word_count": word_count,
         "model_override": args.model,
     }
     output.with_suffix(".json").write_text(json.dumps(report, indent=2) + "\n",

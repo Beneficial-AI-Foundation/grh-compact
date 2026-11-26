@@ -1,0 +1,1 @@
+cp: cannot open '/auth/auth.json' for reading: Permission denied

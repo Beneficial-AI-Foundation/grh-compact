@@ -12,6 +12,6 @@ Output a **complete, compilable LaTeX document** as the sole response. It must b
 
 State the target and the main logical route. Leave steps that you judge straightforward as numbered `Gap 1`, `Gap 2`, and so on. Include at least one gap. For each gap, state all variables, hypotheses, and the exact conclusion; explain where it enters the main route. The gaps together with the allowed facts must suffice to derive the target.
 
-Preserve the decisive idea of the original proof. You may use equations and standard LaTeX packages. Do not paste Lean code, tactic sequences, or a line-by-line translation. Do not assume the target, an equivalent ready-made theorem, or an unstated result. If a step is genuinely difficult, explain it in the main line instead of labeling it an easy gap.
+Preserve the decisive idea of the original proof. You may use equations and standard LaTeX packages. Do not paste Lean code, tactic sequences, or a line-by-line translation. Do not assume the target, an equivalent ready-made theorem, or an unstated result. A gap may be substantial: explain its mathematical role in the main line so that a later sketch can expand it recursively. Do not silently treat a difficult step as an allowed fact.
 
 The reviewer will not see the original proof. It must be able to attempt an informal proof of every gap and then check that the full argument closes. Output only the LaTeX source, without Markdown fences or process notes.
