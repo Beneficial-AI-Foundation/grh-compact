@@ -1,0 +1,6 @@
+/.lake/
+/.verilib/probes/
+*.olean
+*.ilean
+__pycache__/
+*.py[cod]
