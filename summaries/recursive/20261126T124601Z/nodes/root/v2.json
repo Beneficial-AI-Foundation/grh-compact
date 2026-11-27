@@ -1,0 +1,13 @@
+{
+  "schema": "math-sketch/v1",
+  "target": "New.grh",
+  "source": "src/New/Main.lean",
+  "source_sha256": "b6b285737cc0c306f380442eae279fd3127693c1074e7978d80f8ffd14f4078e",
+  "prompt_sha256": "238e921527a6eb2c7984a6395534319071336329295b10794db5f814d4c30121",
+  "sketch_sha256": "c8b26dca0c950cbb53c189a9e9b6350bce4b623028b309d1f1c2d2d5f47b2c41",
+  "word_count": 257,
+  "model_override": null,
+  "target_statement_sha256": null,
+  "revision_note_sha256": "c856f3d5b70c9ac2976aa3d848049498d4c9070db62fc394e826f1f3b4e66082",
+  "prior_sketch_sha256": "9fd8a6c8730d1a790d734d18147ab56a5662a58fd66698e74db96b68a7f6ca6e"
+}

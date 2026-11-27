@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import tempfile
 from datetime import datetime, timezone
@@ -30,6 +31,11 @@ def main() -> None:
     parser.add_argument("--sketch", type=Path, default=ROOT / "summaries/New.grh.tex")
     parser.add_argument("--facts", type=Path, default=ROOT / "summaries/New.grh.allowed-facts.md")
     parser.add_argument("--metadata", type=Path, default=ROOT / "summaries/New.grh.json")
+    parser.add_argument("--target-file", type=Path, help="exact target statement for this node")
+    parser.add_argument("--output-dir", type=Path, help="directory for this review's audit files")
+    parser.add_argument("--structured", action="store_true", help="require a machine-readable verdict")
+    parser.add_argument("--child-proofs", type=Path,
+                        help="independently reviewed child proofs for upward recheck")
     parser.add_argument("--dry-run", action="store_true", help="prepare input and check isolation only")
     args = parser.parse_args()
 
@@ -41,26 +47,44 @@ def main() -> None:
     if not CODEX_BINARY.is_file() or not CODE_MODE_HOST.is_file() or not AUTH.is_file():
         parser.error("local Codex binaries or account authentication are missing")
 
+    target = (args.target_file.read_text(encoding="utf-8") if args.target_file else
+              "For every positive modulus q, Dirichlet character χ modulo q, and complex ρ "
+              "with Re ρ > 1/2, L(ρ, χ) is nonzero unless χ is principal and ρ = 1.")
+    child_proofs = args.child_proofs.read_text(encoding="utf-8") if args.child_proofs else "None."
+    verdict_instructions = """
+Return only a JSON object with this schema:
+{"gaps":[{"number":1,"status":"proved|unproved|incomplete",
+"reason":"specific proof or first obstruction"}],
+"parent_closes":false,"parent_reason":"specific deduction or obstruction"}.
+Use "incomplete" if a gap lacks definitions, quantifiers, hypotheses, or an exact conclusion.
+Use "proved" only with a checkable proof in reason. Include every numbered gap exactly once.
+Set parent_closes true only if all gaps are proved and the deduction is checked.
+""" if args.structured else ""
     prompt = f"""You are an independent mathematical reviewer. Use only the target, allowed facts,
 and frozen sketch below. Do not call tools, browse, or seek the original Lean proof.
 
 For each numbered gap, give a checkable informal proof or identify the first precise obstruction.
+If reviewed child proofs are supplied, verify that their exact targets and conclusions fill the
+corresponding gaps; use their proof text as additional evidence, not as an unchecked assertion.
 Then check whether the proved gaps and allowed facts imply the target, including all hypotheses,
 quantifiers, and numerical estimates. Report each gap as proved, conditional, or unproved;
 report separately whether the whole argument closes. Do not claim success for an unproved gap.
+{verdict_instructions}
 
 TARGET
-For every positive modulus q, Dirichlet character χ modulo q, and complex ρ with Re ρ > 1/2,
-L(ρ, χ) is nonzero unless χ is principal and ρ = 1.
+{target}
 
 ALLOWED FACTS
 {facts_bytes.decode('utf-8')}
 
 FROZEN SKETCH
 {sketch_bytes.decode('utf-8')}
+
+REVIEWED CHILD PROOFS (if any)
+{child_proofs}
 """
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    output = ROOT / "summaries/reviews" / stamp
+    output = args.output_dir or ROOT / "summaries/reviews" / stamp
     with tempfile.TemporaryDirectory(prefix="grh-review-bundle-") as directory:
         bundle = Path(directory)
         bundle.chmod(0o755)
@@ -111,6 +135,28 @@ FROZEN SKETCH
                     if e.get("type") == "item.completed"
                     and e.get("item", {}).get("type") == "agent_message"]
         (output / "answer.txt").write_text(messages[-1] if messages else "", encoding="utf-8")
+        if args.structured and messages:
+            try:
+                answer = messages[-1].strip()
+                if answer.startswith("```"):
+                    answer = re.sub(r"^```(?:json)?\s*|\s*```$", "", answer).strip()
+                verdict = json.loads(answer)
+                expected = [int(n) for n in re.findall(r"\\textbf\{Gap\s+(\d+)\.",
+                                                       sketch_bytes.decode("utf-8"))]
+                gaps = verdict["gaps"]
+                if (sorted(g["number"] for g in gaps) != sorted(expected)
+                    or len(gaps) != len(expected)
+                    or any(g["status"] not in {"proved", "unproved", "incomplete"}
+                           or not isinstance(g["reason"], str) or not g["reason"] for g in gaps)
+                    or not isinstance(verdict["parent_closes"], bool)
+                    or not isinstance(verdict["parent_reason"], str)
+                    or (verdict["parent_closes"] and
+                        any(g["status"] != "proved" for g in gaps))):
+                    raise ValueError("verdict does not match numbered gaps or closure rules")
+                (output / "verdict.json").write_text(json.dumps(verdict, indent=2) + "\n",
+                                                     encoding="utf-8")
+            except (ValueError, KeyError, TypeError) as exc:
+                (output / "verdict-error.txt").write_text(str(exc), encoding="utf-8")
         tool_items = sorted({e.get("item", {}).get("type", "") for e in events
                              if e.get("type", "").startswith("item.")
                              and e.get("item", {}).get("type") not in
@@ -134,6 +180,8 @@ FROZEN SKETCH
         print(f"review output: {output}")
         if result.returncode or not report["turn_completed"]:
             raise RuntimeError("review did not complete; inspect stderr and events")
+        if args.structured and not (output / "verdict.json").is_file():
+            raise RuntimeError("review verdict was invalid; inspect answer and verdict-error")
 
 
 if __name__ == "__main__":

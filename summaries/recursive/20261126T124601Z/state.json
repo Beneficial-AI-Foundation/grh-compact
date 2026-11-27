@@ -1,0 +1,75 @@
+{
+  "schema": "recursive-sketch/v1",
+  "root": "root",
+  "source": "src/New/Main.lean",
+  "declaration": "New.grh",
+  "nodes": {
+    "root": {
+      "id": "root",
+      "parent": null,
+      "parent_gap": null,
+      "depth": 0,
+      "statement": "For every positive modulus q, Dirichlet character χ modulo q, and complex ρ with Re ρ > 1/2, L(ρ, χ) is nonzero unless χ is principal and ρ = 1.",
+      "version": 2,
+      "revisions": 1,
+      "status": "stuck",
+      "children": {
+        "1": "root-g1"
+      },
+      "reason": "a child gap remains unproved",
+      "review_output": "nodes/root/review-v2-a1",
+      "verdict": {
+        "gaps": [
+          {
+            "number": 1,
+            "status": "unproved",
+            "reason": "The first obstruction is the claimed covolume comparison. The sketch gives no construction of a cyclotomic tower, thick places, or theta lifts with the stated witnesses, and gives no upper or product-formula lower bound for a common covolume. In particular, there is no estimate yielding the displayed prime-sum inequality for the same witnesses at every u in the prescribed interval. The allowed criterion takes a prime-error bound as a hypothesis and does not supply this comparison."
+          },
+          {
+            "number": 2,
+            "status": "proved",
+            "reason": "Fix d and N. First, the logarithmic derivatives used in C are regular at 1 after the stated pole removal. To see this for any modulus K, a nonprincipal character has bounded partial sums, so summation by parts continues its Dirichlet series holomorphically to Re s>0. The principal L-function is ζ(s) times the finite factors for primes dividing K. Subtracting the integral of v^(−s) on [1,∞) from the zeta series continues ζ(s) to Re s>0 with a simple pole at 1, since the sum of the differences between each summand and its integral on [n,n+1] converges locally uniformly there. If any nonprincipal L-function vanished at 1, the product over all h=φ(K) characters would therefore be holomorphic throughout Re s>0. For Re s>1, its Euler factor at p∤K is (1−p^(−rs))^(−h/r), where r is the order of p in the unit group. Indeed, character values at p run through the r-th roots of unity equally often, as follows by summing their powers by character orthogonality. Thus the product has a Dirichlet series with nonnegative coefficients and coefficient at least 1 at every n^h with gcd(n,K)=1. In the Taylor series at s=2 evaluated at s=1/h, termwise differentiation of the Dirichlet series gives nonnegative terms. Interchanging the sums shows that the Taylor sum equals the Dirichlet series evaluated at 1/h. The Taylor series converges because 2−1/h<2, whereas the Dirichlet series dominates the divergent sum of 1/n over n coprime to K. This contradiction proves the required nonvanishing at 1.\n\nFor K=N and K=1, put A_K(v)=R_{d,K}(e^v) for v≥0 and A_K(v)=0 for v<0. The bound Λ(n)≤log n gives A_K(v)=O(1+v²) on v≥0. Let F_K(z)=∫₀^∞ A_K(v)e^(−zv) dv for Re z>0. Integrating the summand from log n to infinity gives n^(−1−z)/(z(z+1)). By character orthogonality and the Euler products, F_K(z)=D_K(1+z)/(z(z+1))−1/(φ(K)z²)−C_{d,K}/z, where D_K(s)=φ(K)^(−1)∑_{η mod K}(L′_{ηκ_d}/L_{ηκ_d}−L′_η/L_η)(s). Each twist is nonprincipal, since the Chinese remainder theorem gives a unit that is 1 modulo K and a nonsquare modulo d. Consequently D_K(1+z)=1/(φ(K)z)+B_K+O(z), where B_K is the average of the differences of the regular logarithmic derivatives. This constant is real because D_K is real for real s>1 by its Dirichlet series. The definition gives C_{d,K}=B_K−1/φ(K), so both poles in F_K cancel and F_K extends holomorphically to a neighborhood of 0.\n\nTake U=t²/2 and let G_t be the Gaussian probability density of mean U and variance t². For σ=t^(−2), the Gaussian Fourier integral and absolute integration give ∫ℝ A_K(v)G_t(v) dv=(2πi)^(−1)∫_{σ−i∞}^{σ+i∞} F_K(z)exp(zU+t²z²/2) dz. Choose fixed r>0 and 0<δ<min(r/2,1/4) so that the rectangle from −δ to σ with imaginary parts in [−r,r] lies in the neighborhood of holomorphy for both K and all large t. On the original line F_K is O(t⁶) by the growth bound, so the portions with |Im z|≥r are exponentially small in t². Shift the remaining segment to Re z=−δ. There the real part of the exponent is at most t²(−δ+δ²)/2. On the horizontal segments it is at most 1/2−3r²t²/8 for large t, using |Re z|≤r/2. The shifted integrals are therefore O(exp(−k t²)) for some k>0 after absorbing polynomial factors. For large t the complement of [t,t²] is at distance at least t²/4 from U. The Gaussian bound and A_K(v)=O(1+v²) show that restricting the original average to [t,t²] changes it by O(exp(−k′t²)) for some k′>0, by retaining half the Gaussian exponent to integrate the polynomial bound. The interval has Gaussian mass at least 1/2 for large t. Uniformly for 0≤c≤e^t, the restricted average of A_N−cA_1 has absolute value O((1+e^t)exp(−min(k,k′)t²)), which is less than e^(−t)/2 eventually. If A_N(u)−cA_1(u)>e^(−t) at every point of the interval, the average would exceed e^(−t)/2. This proves the claimed existence of u with the required uniform threshold in c."
+          }
+        ],
+        "parent_closes": false,
+        "parent_reason": "Gap 1 is unproved. If its witnesses existed, the stated numerical deduction would work for the displayed error R. The class a=M/2−1 is a unit since any common divisor of a and M divides 2 and a is odd. It is 7 modulo 8, and each prime d in the class satisfies M∣2(d+1) and M∤d+1. The choice of ε gives 0<ε≤1/102 and 1/2<β<Re ρ. For each such d and all sufficiently large x, c=T/H≤log b=x^ε≤e^t for t=10^6 log x. Gap 2 then supplies a u covered by Gap 1. Dividing by maH gives R_{d,M}(x)≤φ(M)x^(−1/2+6ε)+x^(−10^6). Dividing this upper bound by x^(β−1) gives φ(M)x^(−2ε)+x^(−10^6+1/2−8ε), which tends to zero. This is eventual for each d separately, as the criterion requires. The criterion is phrased in terms of primeError, so its application also requires identifying that quantity with R_{d,M}, an equality the supplied text leaves implicit. With that identification and Gap 1, the criterion would yield nonvanishing for the induced character at ρ, and the allowed Euler-factor comparison would transfer it to χ away from the stated principal exception."
+      },
+      "revision_reason": null
+    },
+    "root-g1": {
+      "id": "root-g1",
+      "parent": "root",
+      "parent_gap": 1,
+      "depth": 1,
+      "statement": "Let \\(M>0\\) be divisible by \\(18480\\), let \\(d\\) be prime with \\(M\\mid2(d+1)\\) and \\(M\\nmid d+1\\), and let \\(0<\\varepsilon<1/100\\). For every sufficiently large \\(x\\), there are positive integers \\(m,H,T,f\\) and positive reals \\(a,b\\) such that\n\\[\n m\\ge\\sqrt{x},\\quad \\log b=x^\\varepsilon,\\quad\n H\\ge T/\\log b,\\quad f=T\\varphi(M),\n\\]\nand, for \\emph{every} \\(u\\in[10^6\\log x,(10^6\\log x)^2]\\),\n\\[\n maH\\left(R_{d,M}(x)-R_{d,M}(e^u)\n              +\\frac TH R_{d,1}(e^u)\\right)\n \\le fa(\\log b)^5.\n\\]\nThis is the geometric step used above. Construct the cyclotomic tower and its thick places, then compare upper and product-formula lower bounds for the same covolume of theta lifts. Their common main height cancels; the remaining prime sum gives the displayed inequality. The construction must allow the auxiliary scale \\(e^u\\) throughout the stated interval.",
+      "version": 2,
+      "revisions": 1,
+      "status": "stuck",
+      "children": {},
+      "reason": "gap statements remain incomplete after revision budget",
+      "revision_reason": null,
+      "review_output": "nodes/root-g1/review-v2-a1",
+      "verdict": {
+        "gaps": [
+          {
+            "number": 1,
+            "status": "unproved",
+            "reason": "The two cyclotomic class requirements are incompatible as written. Every member of S is selected from places of class 1 modulo M, but its required class of −1 modulo M3^c reduces to −1 modulo M. Since M is a positive multiple of 18480, these residues are distinct. Thus S is empty, contradicting H ≥ T/log b > 0. If the two requirements concern different class maps, the sketch needs to define those maps."
+          },
+          {
+            "number": 2,
+            "status": "incomplete",
+            "reason": "The target space, its integral structure, the theta lift maps, and the formula for their main height are unspecified, so there is no way to check the covolume or index estimates or identify the height remainder with Q_u. The stated count has a conditional elementary proof. If the tops occur once per unit class above 1 modulo M, S consists of classes above −1, and ν is a unit modulo M3^c2^s, then multiplication by −ν maps the top fiber bijectively onto the fiber above −ν modulo M. Its image meets S in exactly H classes when ν ≡ 1 modulo M and in zero classes otherwise. Even that count does not establish the weighted prime-sum identity without a height formula."
+          },
+          {
+            "number": 3,
+            "status": "incomplete",
+            "reason": "The rank-one and good-lift denominator bounds and the local estimates relating them to the determinant are unspecified. There is also an algebraic error in the stated cancellation. The product of Z(ϑ_ι)/Z(1) and Z(1)^2/Z(ϑ_ι)^2 is Z(1)/Z(ϑ_ι), and equality of the two determinants has not been established. The product formula for a nonzero algebraic number concerns its absolute values over all places and does not give the claimed inequality without the missing local estimates."
+          }
+        ],
+        "parent_closes": false,
+        "parent_reason": "The tower requirements conflict as written, and neither covolume bound has been established. The final algebra is valid conditional on those bounds. With A = h − mQ_u + L, subtracting DA from the claimed comparison gives mQ_u ≤ 4L + ((D − n)/D)(−A) + 2δ/D, which yields the stated bound using the three estimates from Gap 2. The last numerical estimate also follows if ‘near xb’ supplies a ≥ Cxb for some fixed C > 0. Writing t = log b = x^ε, the right side is at most 34tB + 4x^99 for large x, and B ≥ Cx exp(t)t^3. Dividing by t²B gives a quantity tending to zero for each fixed ε > 0. This estimate is independent of u, but the construction of common data and the covolume comparisons for every u remain unresolved."
+      }
+    }
+  }
+}

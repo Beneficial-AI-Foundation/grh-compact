@@ -1,0 +1,12 @@
+Let \(M>0\) be divisible by \(18480\), let \(d\) be prime with \(M\mid2(d+1)\) and \(M\nmid d+1\), and let \(0<\varepsilon<1/100\). For every sufficiently large \(x\), there are positive integers \(m,H,T,f\) and positive reals \(a,b\) such that
+\[
+ m\ge\sqrt{x},\quad \log b=x^\varepsilon,\quad
+ H\ge T/\log b,\quad f=T\varphi(M),
+\]
+and, for \emph{every} \(u\in[10^6\log x,(10^6\log x)^2]\),
+\[
+ maH\left(R_{d,M}(x)-R_{d,M}(e^u)
+              +\frac TH R_{d,1}(e^u)\right)
+ \le fa(\log b)^5.
+\]
+This is the geometric step used above. Construct the cyclotomic tower and its thick places, then compare upper and product-formula lower bounds for the same covolume of theta lifts. Their common main height cancels; the remaining prime sum gives the displayed inequality. The construction must allow the auxiliary scale \(e^u\) throughout the stated interval.

@@ -27,6 +27,11 @@ def main() -> None:
     parser.add_argument("declaration", help="fully qualified target declaration")
     parser.add_argument("--output", type=Path, help="output .tex file")
     parser.add_argument("--allowed-facts", type=Path, help="text file listing permitted facts")
+    parser.add_argument("--target-statement", type=Path,
+                        help="exact statement of a child gap (instead of a Lean declaration)")
+    parser.add_argument("--revision-note", type=Path,
+                        help="specific defects to repair in a new sketch version")
+    parser.add_argument("--prior-sketch", type=Path, help="previous sketch to revise")
     parser.add_argument("--model", help="Codex model override")
     parser.add_argument("--dry-run", action="store_true", help="print prompt without running Codex")
     args = parser.parse_args()
@@ -43,11 +48,19 @@ def main() -> None:
     source_hash = sha256(source.read_bytes())
     prompt_bytes = PROMPT.read_bytes()
     facts = args.allowed_facts.read_text(encoding="utf-8") if args.allowed_facts else "None specified."
+    statement = args.target_statement.read_text(encoding="utf-8") if args.target_statement else ""
+    revision = args.revision_note.read_text(encoding="utf-8") if args.revision_note else ""
+    prior = args.prior_sketch.read_text(encoding="utf-8") if args.prior_sketch else ""
     prompt = (prompt_bytes.decode("utf-8") + "\n\n"
               + f"Target declaration: `{args.declaration}`\n"
+              + f"Exact target statement (if this is a child gap):\n{statement}\n"
+              + ("For this child gap, a complete proof with zero further gaps is preferred when "
+                 "possible; this overrides the generic instruction to include a gap.\n" if statement else "")
               + f"Source file: `{source.relative_to(ROOT)}`\n"
               + f"Target source SHA-256: `{source_hash}`\n"
-              + f"Permitted prerequisite statements:\n{facts}\n")
+              + f"Permitted prerequisite statements:\n{facts}\n"
+              + f"Defects to repair, if revising a prior sketch:\n{revision}\n"
+              + f"Previous sketch to revise, if supplied:\n{prior}\n")
     if args.dry_run:
         print(prompt)
         return
@@ -83,6 +96,9 @@ def main() -> None:
         "sketch_sha256": sha256(output.read_bytes()),
         "word_count": word_count,
         "model_override": args.model,
+        "target_statement_sha256": sha256(statement.encode("utf-8")) if statement else None,
+        "revision_note_sha256": sha256(revision.encode("utf-8")) if revision else None,
+        "prior_sketch_sha256": sha256(prior.encode("utf-8")) if prior else None,
     }
     output.with_suffix(".json").write_text(json.dumps(report, indent=2) + "\n",
                                            encoding="utf-8")

@@ -1,0 +1,6 @@
+COMMAND /home/zhang-liao/miniconda3/bin/python /home/zhang-liao/grh-lean/grh-compact/scripts/review_sketch_docker.py --sketch /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/nodes/root-g1/v2.tex --metadata /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/nodes/root-g1/v2.json --facts /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/allowed-facts.md --target-file /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/nodes/root-g1/target.txt --output-dir /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/nodes/root-g1/review-v2-a1 --structured
+
+STDOUT
+review output: /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/nodes/root-g1/review-v2-a1
+
+STDERR

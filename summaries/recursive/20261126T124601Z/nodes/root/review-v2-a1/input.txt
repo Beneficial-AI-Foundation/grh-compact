@@ -1,0 +1,110 @@
+You are an independent mathematical reviewer. Use only the target, allowed facts,
+and frozen sketch below. Do not call tools, browse, or seek the original Lean proof.
+
+For each numbered gap, give a checkable informal proof or identify the first precise obstruction.
+If reviewed child proofs are supplied, verify that their exact targets and conclusions fill the
+corresponding gaps; use their proof text as additional evidence, not as an unchecked assertion.
+Then check whether the proved gaps and allowed facts imply the target, including all hypotheses,
+quantifiers, and numerical estimates. Report each gap as proved, conditional, or unproved;
+report separately whether the whole argument closes. Do not claim success for an unproved gap.
+
+Return only a JSON object with this schema:
+{"gaps":[{"number":1,"status":"proved|unproved|incomplete",
+"reason":"specific proof or first obstruction"}],
+"parent_closes":false,"parent_reason":"specific deduction or obstruction"}.
+Use "incomplete" if a gap lacks definitions, quantifiers, hypotheses, or an exact conclusion.
+Use "proved" only with a checkable proof in reason. Include every numbered gap exactly once.
+Set parent_closes true only if all gaps are proved and the deduction is checked.
+
+
+TARGET
+For every positive modulus q, Dirichlet character χ modulo q, and complex ρ with Re ρ > 1/2, L(ρ, χ) is nonzero unless χ is principal and ρ = 1.
+
+
+ALLOWED FACTS
+# Allowed facts for the root sketch of `New.grh`
+
+The target is `DirichletLNonvanishingRightOfHalf`: for every positive modulus `q`, Dirichlet character `χ` modulo `q`, and complex `ρ` with `Re ρ > 1/2`, the value `L(ρ, χ)` is nonzero unless `χ` is principal and `ρ = 1`.
+
+The reviewer may use the following prerequisite, which is already proved in `src/New/Endgame/OneSidedCriterion.lean`:
+
+- `entireL_ne_zero_of_primeError_le`: for a modulus `M`, a unit residue class `a` modulo `M`, and `β > 1/2`, suppose every prime `d` in class `a` is `7 mod 8` and coprime to `M`, and for each such `d` the one-sided error `primeError d M x` is eventually at most `x^(β-1)`. Then the entire Dirichlet L-function attached to any character modulo `M` has no zeros with real part greater than `β`.
+
+The reviewer may also use standard facts about changing a Dirichlet character to a multiple of its modulus: the resulting L-function differs by finitely many Euler factors, which do not create zeros in `Re ρ > 1/2` away from the stated pole; and the elementary arithmetic of the residue class `9240 q - 1` modulo `18480 q`.
+
+The one-sided prime error bound `eventually_primeError_le_rpow`, the main inequality `star_inequality`, and the target `New.grh` are **not** allowed facts. If needed, state their necessary content as gaps, with all parameters and hypotheses.
+
+
+FROZEN SKETCH
+\documentclass{article}
+\usepackage{amsmath,amssymb}
+\begin{document}
+\title{Nonvanishing of Dirichlet \(L\)-functions Right of One Half}
+\author{}
+\date{}
+\maketitle
+
+\section*{Main line}
+For every positive modulus \(q\), character \(\chi\bmod q\), and \(\rho\) with \(\Re\rho>1/2\), the target asserts \(L(\rho,\chi)\ne0\), with the principal character at \(\rho=1\) excepted. Put
+\[
+ M=18480q,\quad a=9240q-1,\quad
+ \varepsilon=\frac{\min(\Re\rho,1)-1/2}{51},\quad
+ \beta=\tfrac12+8\varepsilon.
+\]
+Then \(0<\varepsilon<1/100\) and \(1/2<\beta<\Re\rho\). Fix a prime \(d\equiv a\pmod M\). It satisfies the hypotheses of Gap 1. For large \(x\), take its witnesses and apply Gap 2 with \(t=10^6\log x\) and \(c=T/H\). Its \(u\) can be used in Gap 1, giving
+\[
+ R_{d,M}(x)\le
+ \frac{f(\log b)^5}{mH}+x^{-10^6}
+ \le \frac{\varphi(M)x^{6\varepsilon}}{\sqrt{x}}+x^{-10^6}
+ \le x^{\beta-1}
+\]
+eventually. The allowed one-sided criterion makes the entire \(L\)-function of the character induced to \(M\) nonzero at \(\rho\). The allowed finite Euler-factor fact transfers this to \(L(\rho,\chi)\), subject to the stated exception.
+
+\section*{Gaps to prove independently}
+For a prime \(d\equiv7\pmod8\) coprime to \(N\), let \(\kappa_d(n)=(n/d)\), let \(\Lambda\) be the von Mangoldt function, and set
+\[
+\begin{split}
+ R_{d,N}(y)
+ &=\sum_{1\le n\le y}\Lambda(n)(1-\kappa_d(n))
+   \mathbf1_{n\equiv1\;(\mathrm{mod}\;N)}
+   \left(\frac1n-\frac1y\right)
+   -\frac{\log y}{\varphi(N)}-C_{d,N},\\
+ C_{d,N}
+ &=\Re\!\left[
+ \frac{\displaystyle\sum_{\eta\bmod N}
+ \left(\frac{\widetilde L'_{\eta\kappa_d}(1)}
+ {\widetilde L_{\eta\kappa_d}(1)}
+ -\frac{\widetilde L'_\eta(1)}{\widetilde L_\eta(1)}\right)-1}
+ {\varphi(N)}\right].
+\end{split}
+\]
+Here \(\widetilde L_\eta(s)=(s-1)L(s,\eta)\) for a principal character and \(L(s,\eta)\) otherwise.
+
+\noindent\textbf{Gap 1.} Let \(M>0\) be divisible by \(18480\), let \(d\) be prime with \(M\mid2(d+1)\) and \(M\nmid d+1\), and let \(0<\varepsilon<1/100\). For every sufficiently large \(x\), there are positive integers \(m,H,T,f\) and positive reals \(a,b\) such that
+\[
+ m\ge\sqrt{x},\quad \log b=x^\varepsilon,\quad
+ H\ge T/\log b,\quad f=T\varphi(M),
+\]
+and, for \emph{every} \(u\in[10^6\log x,(10^6\log x)^2]\),
+\[
+ maH\left(R_{d,M}(x)-R_{d,M}(e^u)
+              +\frac TH R_{d,1}(e^u)\right)
+ \le fa(\log b)^5.
+\]
+This is the geometric step used above. Construct the cyclotomic tower and its thick places, then compare upper and product-formula lower bounds for the same covolume of theta lifts. Their common main height cancels; the remaining prime sum gives the displayed inequality. The construction must allow the auxiliary scale \(e^u\) throughout the stated interval.
+
+\medskip
+\noindent\textbf{Gap 2.} Let \(d\equiv7\pmod8\) be prime and coprime to \(N>0\). For every sufficiently large \(t\) and every \(0\le c\le e^t\), there is \(u\in[t,t^2]\) such that
+\[
+ R_{d,N}(e^u)-cR_{d,1}(e^u)\le e^{-t}.
+\]
+This supplies the auxiliary scale in the main line. Prove it from the Mellin transforms of the two errors by a localized moment argument.
+
+\section*{Allowed facts}
+The one-sided prime-error nonvanishing criterion, finite Euler-factor behavior when changing modulus, and the elementary arithmetic of \(9240q-1\pmod{18480q}\).
+
+\end{document}
+
+
+REVIEWED CHILD PROOFS (if any)
+None.

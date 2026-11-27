@@ -1,0 +1,1 @@
+For every positive modulus q, Dirichlet character χ modulo q, and complex ρ with Re ρ > 1/2, L(ρ, χ) is nonzero unless χ is principal and ρ = 1.

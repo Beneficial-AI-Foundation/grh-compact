@@ -1,0 +1,116 @@
+You are an independent mathematical reviewer. Use only the target, allowed facts,
+and frozen sketch below. Do not call tools, browse, or seek the original Lean proof.
+
+For each numbered gap, give a checkable informal proof or identify the first precise obstruction.
+If reviewed child proofs are supplied, verify that their exact targets and conclusions fill the
+corresponding gaps; use their proof text as additional evidence, not as an unchecked assertion.
+Then check whether the proved gaps and allowed facts imply the target, including all hypotheses,
+quantifiers, and numerical estimates. Report each gap as proved, conditional, or unproved;
+report separately whether the whole argument closes. Do not claim success for an unproved gap.
+
+Return only a JSON object with this schema:
+{"gaps":[{"number":1,"status":"proved|unproved|incomplete",
+"reason":"specific proof or first obstruction"}],
+"parent_closes":false,"parent_reason":"specific deduction or obstruction"}.
+Use "incomplete" if a gap lacks definitions, quantifiers, hypotheses, or an exact conclusion.
+Use "proved" only with a checkable proof in reason. Include every numbered gap exactly once.
+Set parent_closes true only if all gaps are proved and the deduction is checked.
+
+
+TARGET
+Let \(M>0\) be divisible by \(18480\), let \(d\) be prime with \(M\mid2(d+1)\) and \(M\nmid d+1\), and let \(0<\varepsilon<1/100\). For every sufficiently large \(x\), there are positive integers \(m,H,T,f\) and positive reals \(a,b\) such that
+\[
+ m\ge\sqrt{x},\quad \log b=x^\varepsilon,\quad
+ H\ge T/\log b,\quad f=T\varphi(M),
+\]
+and, for \emph{every} \(u\in[10^6\log x,(10^6\log x)^2]\),
+\[
+ maH\left(R_{d,M}(x)-R_{d,M}(e^u)
+              +\frac TH R_{d,1}(e^u)\right)
+ \le fa(\log b)^5.
+\]
+This is the geometric step used above. Construct the cyclotomic tower and its thick places, then compare upper and product-formula lower bounds for the same covolume of theta lifts. Their common main height cancels; the remaining prime sum gives the displayed inequality. The construction must allow the auxiliary scale \(e^u\) throughout the stated interval.
+
+
+ALLOWED FACTS
+# Allowed facts for the root sketch of `New.grh`
+
+The target is `DirichletLNonvanishingRightOfHalf`: for every positive modulus `q`, Dirichlet character `χ` modulo `q`, and complex `ρ` with `Re ρ > 1/2`, the value `L(ρ, χ)` is nonzero unless `χ` is principal and `ρ = 1`.
+
+The reviewer may use the following prerequisite, which is already proved in `src/New/Endgame/OneSidedCriterion.lean`:
+
+- `entireL_ne_zero_of_primeError_le`: for a modulus `M`, a unit residue class `a` modulo `M`, and `β > 1/2`, suppose every prime `d` in class `a` is `7 mod 8` and coprime to `M`, and for each such `d` the one-sided error `primeError d M x` is eventually at most `x^(β-1)`. Then the entire Dirichlet L-function attached to any character modulo `M` has no zeros with real part greater than `β`.
+
+The reviewer may also use standard facts about changing a Dirichlet character to a multiple of its modulus: the resulting L-function differs by finitely many Euler factors, which do not create zeros in `Re ρ > 1/2` away from the stated pole; and the elementary arithmetic of the residue class `9240 q - 1` modulo `18480 q`.
+
+The one-sided prime error bound `eventually_primeError_le_rpow`, the main inequality `star_inequality`, and the target `New.grh` are **not** allowed facts. If needed, state their necessary content as gaps, with all parameters and hypotheses.
+
+
+FROZEN SKETCH
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb}
+\begin{document}
+\title{The Geometric Prime-Error Inequality}
+\author{}
+\date{}
+\maketitle
+
+\section*{Main line}
+Fix \(M,d,\varepsilon\) as in the statement and take \(x\) sufficiently large. Write \(R_N=R_{d,N}\). Construct the data in Gap 1. For any
+\[
+10^6\log x\leq u\leq(10^6\log x)^2
+\]
+put
+\[
+Q_u=aH\left(R_M(x)-R_M(e^u)+\frac TH R_1(e^u)\right),
+\quad B=fa(\log b)^3,\quad L=(\log b)B.
+\]
+Gap 2 supplies a family of theta lifts with an upper covolume bound; Gap 3 applies the product formula to the same family. If \(D\) is the dimension of the target space, their bounds give
+\[
+D(h-3L)\leq n(h-mQ_u+L)+2\delta,
+\]
+where \(n\geq(1-4/b^2)D\) and
+\(\delta\leq5D\log(1+b^2)B\).
+Using the remaining estimates in Gap 2 and \(n\leq D\), the common height \(h\) cancels and yields
+\[
+mQ_u\leq4L+4x^{99}+10\log(1+b^2)B
+       \leq(\log b)^2B=fa(\log b)^5.
+\]
+All construction estimates hold throughout the stated interval, so the same \(m,H,T,f,a,b\) work for every \(u\).
+
+\section*{Gaps to prove independently}
+
+\noindent\textbf{Gap 1.} Given the fixed \(M,d,\varepsilon\) and sufficiently large \(x\), construct \(K=\mathbb Q(\sqrt{-d})\) and
+\[
+E=K(\zeta_{M3^c2^s}),\qquad c=\lfloor\log_3s\rfloor+5.
+\]
+Among the infinite places of \(E\), let the \(T=3^c2^s\) \emph{tops} have residue class \(1\bmod M\). Construct \(H\) \emph{thick} places among them, with \(H\geq T/\log b\), and positive integers \(m,f\) and positive reals \(a,b\) satisfying
+\[
+m\geq\sqrt{x},\qquad f=T\varphi(M),\qquad\log b=x^\varepsilon.
+\]
+Give thick places nominal weight \(a/x\), and all other places weight \(a/e^u\). Prove that, for every \(u\) in the stated interval, these weights admit the ranks, auxiliary primes and integral forms required in Gaps 2 and 3. In particular, justify the thick-place spacing used by the construction.
+
+\medskip
+\noindent\textbf{Gap 2.} For the data of Gap 1 and each such \(u\), let \(h\) be the main height of the theta lifts and \(D>0\) the target dimension. Prove that there are \(n\leq D\) independent target forms, an index bound \(\delta\geq0\), and an upper bound \(V\) for the logarithm of their squared lift covolume at every conjugate, such that
+\[
+n\geq(1-4/b^2)D,\quad
+\delta\leq5D\log(1+b^2)B,\quad
+V=n(h-mQ_u+L),
+\quad -(h-mQ_u+L)\leq b^2x^{99}.
+\]
+This includes proving that the weighted prime sum in the height calculation is exactly \(Q_u\): translating a top by a summation integer lands in a thick place precisely for the residue class \(1\bmod M\).
+
+\medskip
+\noindent\textbf{Gap 3.} For every family and bounds \(n,\delta,V\) supplied by Gap 2, prove
+\[
+D(h-3L)\leq V+2\delta.
+\]
+Construct congruent twists, compare their lift volumes with the integral covolume, complete the nearly spanning family to a basis, and apply the product formula to the resulting reciprocal volume ratios. This is the lower bound for the covolume used in the main line.
+
+\section*{Allowed facts}
+Only standard elementary algebra and inequalities are used directly. The permitted one-sided zero-free criterion and character change-of-modulus facts concern the later analytic step and supply none of Gaps 1--3.
+\end{document}
+
+
+REVIEWED CHILD PROOFS (if any)
+None.

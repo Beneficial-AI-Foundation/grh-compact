@@ -1,0 +1,6 @@
+COMMAND /home/zhang-liao/miniconda3/bin/python /home/zhang-liao/grh-lean/grh-compact/scripts/summarize_math.py src/New/Main.lean root-g1 --output /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/nodes/root-g1/v2.tex --allowed-facts /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/allowed-facts.md --target-statement /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/nodes/root-g1/target.txt --revision-note /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/nodes/root-g1/revision-v2.txt --prior-sketch /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/nodes/root-g1/v1.tex
+
+STDOUT
+wrote /home/zhang-liao/grh-lean/grh-compact/summaries/recursive/20261126T124601Z/nodes/root-g1/v2.tex
+
+STDERR

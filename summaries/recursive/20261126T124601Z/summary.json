@@ -1,0 +1,11 @@
+{
+  "root_status": "stuck",
+  "node_count": 2,
+  "leaves": [
+    {
+      "id": "root-g1",
+      "status": "stuck",
+      "reason": "gap statements remain incomplete after revision budget"
+    }
+  ]
+}

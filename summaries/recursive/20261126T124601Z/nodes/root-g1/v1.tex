@@ -1,0 +1,63 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb}
+\begin{document}
+\title{The Geometric Prime-Error Inequality}
+\author{}
+\date{}
+\maketitle
+
+\section*{Main line}
+Fix \(M,d,\varepsilon\) as in the statement and take \(x\) sufficiently large. Write \(R_N=R_{d,N}\). Construct the data in Gap 1. For any
+\[
+10^6\log x\leq u\leq(10^6\log x)^2
+\]
+put
+\[
+Q_u=aH\left(R_M(x)-R_M(e^u)+\frac TH R_1(e^u)\right),
+\quad B=fa(\log b)^3,\quad L=(\log b)B.
+\]
+Gap 2 supplies a family of theta lifts with an upper covolume bound; Gap 3 applies the product formula to the same family. If \(D\) is the dimension of the target space, their bounds give
+\[
+D(h-3L)\leq n(h-mQ_u+L)+2\delta,
+\]
+where \(n\geq(1-4/b^2)D\) and
+\(\delta\leq5D\log(1+b^2)B\).
+Using the remaining estimates in Gap 2 and \(n\leq D\), the common height \(h\) cancels and yields
+\[
+mQ_u\leq4L+4x^{99}+10\log(1+b^2)B
+       \leq(\log b)^2B=fa(\log b)^5.
+\]
+All construction estimates hold throughout the stated interval, so the same \(m,H,T,f,a,b\) work for every \(u\).
+
+\section*{Gaps to prove independently}
+
+\noindent\textbf{Gap 1.} Given the fixed \(M,d,\varepsilon\) and sufficiently large \(x\), construct \(K=\mathbb Q(\sqrt{-d})\) and
+\[
+E=K(\zeta_{M3^c2^s}),\qquad c=\lfloor\log_3s\rfloor+5.
+\]
+Among the infinite places of \(E\), let the \(T=3^c2^s\) \emph{tops} have residue class \(1\bmod M\). Construct \(H\) \emph{thick} places among them, with \(H\geq T/\log b\), and positive integers \(m,f\) and positive reals \(a,b\) satisfying
+\[
+m\geq\sqrt{x},\qquad f=T\varphi(M),\qquad\log b=x^\varepsilon.
+\]
+Give thick places nominal weight \(a/x\), and all other places weight \(a/e^u\). Prove that, for every \(u\) in the stated interval, these weights admit the ranks, auxiliary primes and integral forms required in Gaps 2 and 3. In particular, justify the thick-place spacing used by the construction.
+
+\medskip
+\noindent\textbf{Gap 2.} For the data of Gap 1 and each such \(u\), let \(h\) be the main height of the theta lifts and \(D>0\) the target dimension. Prove that there are \(n\leq D\) independent target forms, an index bound \(\delta\geq0\), and an upper bound \(V\) for the logarithm of their squared lift covolume at every conjugate, such that
+\[
+n\geq(1-4/b^2)D,\quad
+\delta\leq5D\log(1+b^2)B,\quad
+V=n(h-mQ_u+L),
+\quad -(h-mQ_u+L)\leq b^2x^{99}.
+\]
+This includes proving that the weighted prime sum in the height calculation is exactly \(Q_u\): translating a top by a summation integer lands in a thick place precisely for the residue class \(1\bmod M\).
+
+\medskip
+\noindent\textbf{Gap 3.} For every family and bounds \(n,\delta,V\) supplied by Gap 2, prove
+\[
+D(h-3L)\leq V+2\delta.
+\]
+Construct congruent twists, compare their lift volumes with the integral covolume, complete the nearly spanning family to a basis, and apply the product formula to the resulting reciprocal volume ratios. This is the lower bound for the covolume used in the main line.
+
+\section*{Allowed facts}
+Only standard elementary algebra and inequalities are used directly. The permitted one-sided zero-free criterion and character change-of-modulus facts concern the later analytic step and supply none of Gaps 1--3.
+\end{document}

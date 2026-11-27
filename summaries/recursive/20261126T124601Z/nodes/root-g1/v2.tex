@@ -1,0 +1,62 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb}
+\begin{document}
+\title{The Geometric Prime-Error Inequality}
+\author{}
+\date{}
+\maketitle
+
+\section*{Main line}
+Fix \(M,d,\varepsilon\) as stated. For \(N\in\{1,M\}\), define
+\[
+\lambda_N(n)=\mathbf1_{n\equiv1\pmod N}\Lambda(n)(1-\chi_{-d}(n)),\qquad
+R_{d,N}(z)=\sum_{n\le z}\lambda_N(n)\left(\frac1n-\frac1z\right)
+-\frac{\log z}{\varphi(N)}-\kappa_N,
+\]
+where \(\kappa_N\) is the real logarithmic-derivative constant in the source prime-error function.
+
+Use the tower and forms of Gaps 1--2. Put \(B=fa(\log b)^3\), \(L=(\log b)B\), and
+\[
+Q_u=aH\left(R_{d,M}(x)-R_{d,M}(e^u)+\frac TH R_{d,1}(e^u)\right).
+\]
+Gap 2 identifies \(Q_u\) with the height remainder. Gap 3 bounds the same lift covolume from below. If \(D\) is the target dimension, the two bounds yield
+\[
+D(h-3L)\le n(h-mQ_u+L)+2\delta.
+\]
+Since \(n\le D\), \(D-n\le4D/b^2\), and
+\(-(h-mQ_u+L)\le b^2x^{99}\), division by \(D>0\) gives
+\[
+mQ_u\le4L+4x^{99}+10\log(1+b^2)B
+\le(\log b)^2B=fa(\log b)^5.
+\]
+The data are fixed before \(u\) is chosen.
+
+\section*{Gaps to prove independently}
+\noindent\textbf{Gap 1.} For fixed \(M,d,\varepsilon\) above and every sufficiently large \(x\), construct
+\[
+K=\mathbb Q(\sqrt{-d}),\quad E=K(\zeta_{M3^c2^s}),\quad
+c=\lfloor\log_3s\rfloor+5,\quad T=3^c2^s.
+\]
+Among the \(T\) places with cyclotomic class \(1\bmod M\), construct a thick set \(S\) of size \(H\ge T/\log b\), with \(s=22(o+1)\), \(m=2^{o+1}\in[\sqrt x,2\sqrt x]\), \(r\asymp x^5\), \(k=r+1-m\), \(a\) a multiple of \(M3^c2^s\) near \(xb\), \(\log b=x^\varepsilon\), and \(f=T\varphi(M)\). Require every thick class to be \(-1\bmod M3^c\) and, for its projection \(\phi\) modulo \(2^{s+1}\), require
+\[
+\sigma,\tau,\rho\in S,\quad 0<i<j\le324s,\quad
+\phi(\tau/\sigma)^j=\phi(\rho/\sigma)^i
+\ \Longrightarrow\ \phi(\tau/\sigma)=1.
+\]
+Provide distinct primes \(g_0,g_1\in[b^{10},b^{11}]\), congruent to \(1\) modulo \((Md)^{2(s+6)}\), with principal cross-product ideals in \(K\); provide primes in every required logarithmic window \([U,U+\sqrt{\log b}]\), \(100\log b\le U\le2^s\), in that congruence class. Verify all rank, weight, spacing, and scale conditions for every stated \(u\), including \(10^6u\le\log b\). This supplies the admissible tower.
+
+\medskip
+\noindent\textbf{Gap 2.} For these data and each stated \(u\), give thick places nominal weight \(a/x\) and other places \(a/e^u\). Let \(\Theta_\vartheta\) be the composite of the \(m\) theta lifts on the target space of forms on \(U(r)\); let \(h\) be its main height and \(D>0\) the target dimension. Construct \(n\) independent target forms whose squared lift covolume at every complex conjugate is at most \(\exp(n(h-mQ_u+L))\), with
+\[
+(1-4/b^2)D\le n\le D,\qquad
+\delta\le5D\log(1+b^2)B,\qquad
+-(h-mQ_u+L)\le b^2x^{99},
+\]
+where \(\delta\) bounds their integral index. Establish the exact prime-sum identity \(Q_u\): for \(\lambda_1(\nu)\ne0\), multiplication by the class of \(-\nu\) sends a top into \(S\) exactly \(H\) times if \(\nu\equiv1\bmod M\), and zero times otherwise. The class of every thick place, rather than that of every top, proves this count.
+
+\medskip
+\noindent\textbf{Gap 3.} For every family in Gap 2, prove \(D(h-3L)\le n(h-mQ_u+L)+2\delta\). Construct twists \(\vartheta_\iota\) for each complex-to-\(\overline{\mathbb Q}_\ell\) isomorphism \(\iota\), prime to \(\ell\), whose first \(m\) powers satisfy the rank-one and good-lift denominator bounds with total cost \(B/(mk)\), and whose inverse ramified-pair ratios have height at most \(x^{999}\). Define \(Z(\vartheta)=\det(\Theta_\vartheta^*\Theta_\vartheta)\ne0\); factor it into the \(m\) single-lift determinants and the nonzero normalization factor. Complete the \(n\) forms to a basis using integral auxiliary forms. Bound the height of \(Z(\vartheta_\iota)/Z(1)\) by the covolume and index, and that of \(Z(1)^2/Z(\vartheta_\iota)^2\) by the factorization. Their product is \(1\); the product formula gives the asserted inequality. This is the lower bound used above.
+
+\section*{Allowed facts}
+Only elementary algebra, standard inequalities, and the product formula are used directly. The permitted zero-free criterion concerns the later analytic step.
+\end{document}
