@@ -22,7 +22,7 @@
 
 运行命令：`python scripts/run_recursive_sketch.py`。这个入口会调用 Codex 生成草图、用 Docker 启动独立复核，故需要可用的 Codex 登录凭据、Docker 守护进程及模型网络访问。`summary.json` 给出根状态与叶子；`state.json` 保存节点图。自动复核仅证明流程按预算执行，不保证 AI 实际补出缺失的数学证明。
 
-可用 `--max-rounds N` 限制一次运行累计的模型调用轮数：生成一次草图或进行一次 Docker 复核各计一轮，初始冻结草图不计。计数在调用前写入 `state.json`，失败的调用也计入；达到上限时保存 `stop_reason` 和未完成节点，不把它们标为已证明。续跑时使用 `--run-dir` 指向同一目录，并把 `--max-rounds` 设为更大的**累计**上限。例如 `python scripts/run_recursive_sketch.py --max-rounds 4`；续跑同一目录可用 `python scripts/run_recursive_sketch.py --run-dir summaries/recursive/<时间戳> --max-rounds 8`。
+可用 `--max-rounds N` 限制一次运行累计尝试的子缺口数量：每个子缺口首次生成草图时计一轮；根草图复核、子节点复核、修订和父节点重新复核均不另计。计数在首次生成前写入 `state.json`，失败后重试仍属于同一轮；达到上限时保存 `stop_reason` 和未完成节点，不把它们标为已证明。续跑时使用 `--run-dir` 指向同一目录，并把 `--max-rounds` 设为更大的**累计**上限。旧版运行目录会按已有子缺口生成日志换算计数。例如 `python scripts/run_recursive_sketch.py --max-rounds 4`；续跑同一目录可用 `python scripts/run_recursive_sketch.py --run-dir summaries/recursive/<时间戳> --max-rounds 8`。
 
 首次有界试跑位于 `summaries/recursive/20261126T124601Z/`，限制深度 1、节点 3 个、每节点修订 1 次。程序自动将根草图修至第 2 版：独立复核判定其 Gap 2 已补出、Gap 1 未补出，随后自动生成 `root-g1` 的两版子草图并复核。子节点的 gap 陈述仍缺少可核对的定义与构造条件，达到本次修订预算后，根状态为 `stuck`，共 2 个节点。这里的“Gap 2 已补出”只是复核 AI 的 informal 判定，尚未另经人工核查或 Lean 检验；第 2 版草图也尚未完成与原 Lean 声明逐项对照的源码忠实性审计。故本次试跑只验收递归调度与失败记录，不宣称根证明闭合。
 

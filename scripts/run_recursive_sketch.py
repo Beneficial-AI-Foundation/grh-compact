@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run bounded, resumable sketch/review recursion from New.grh."""
+"""Run bounded, resumable gap-by-gap sketch/review recursion from New.grh."""
 
 from __future__ import annotations
 
@@ -127,7 +127,8 @@ def initialize(run: Path) -> dict:
     shutil.copy2(ROOT / "summaries/New.grh.json", folder / "v1.json")
     statement = ("For every positive modulus q, Dirichlet character χ modulo q, and complex ρ "
                  "with Re ρ > 1/2, L(ρ, χ) is nonzero unless χ is principal and ρ = 1.")
-    return {"schema": "recursive-sketch/v1", "root": "root", "source": root_meta["source"],
+    return {"schema": "recursive-sketch/v2", "round_semantics": "gap-attempts",
+            "root": "root", "source": root_meta["source"],
             "declaration": root_meta["target"], "rounds_used": 0, "stop_reason": None,
             "nodes": {
                 "root": {"id": "root", "parent": None, "parent_gap": None, "depth": 0,
@@ -135,14 +136,17 @@ def initialize(run: Path) -> dict:
                          "status": "review", "children": {}, "reason": ""}}}
 
 
-def reserve_round(data: dict, run: Path, args: argparse.Namespace) -> bool:
-    """Persist one model-call slot before launching a possibly failing command."""
+def reserve_round(data: dict, run: Path, args: argparse.Namespace, node: dict) -> bool:
+    """Reserve one round for a new child gap before attempting its sketch."""
+    if node.get("round_reserved"):
+        return True
     maximum = getattr(args, "max_rounds", None)
     data.setdefault("rounds_used", 0)
     if maximum is not None and data["rounds_used"] >= maximum:
         data["stop_reason"] = "max-rounds reached"
         return False
     data["rounds_used"] += 1
+    node["round_reserved"] = True
     data["stop_reason"] = None
     save(run / "state.json", data)
     return True
@@ -165,22 +169,20 @@ def advance(data: dict, run: Path, args: argparse.Namespace) -> bool:
             return True
     for node in list(nodes.values()):
         if node["status"] == "recheck":
-            if not reserve_round(data, run, args):
-                return False
             verdict = review(node, run, nodes)
             node["verdict"] = verdict
             node["status"] = "closed" if verdict["parent_closes"] else "stuck"
             node["reason"] = verdict["parent_reason"]
             return True
         if node["status"] == "sketch":
-            if not reserve_round(data, run, args):
+            # A round is one attempt to explain a gap. The root sketch is
+            # already frozen, and revisions stay within the same attempt.
+            if node["parent"] is not None and node["version"] == 0 and not reserve_round(data, run, args, node):
                 return False
             generate(node, run, data, args.model)
             return True
         if node["status"] != "review":
             continue
-        if not reserve_round(data, run, args):
-            return False
         verdict = review(node, run)
         folder = node_dir(run, node["id"])
         sketch_gaps = gaps_from(folder / f"v{node['version']}.tex")
@@ -248,7 +250,7 @@ def main() -> None:
     parser.add_argument("--max-nodes", type=int, default=7)
     parser.add_argument("--max-revisions", type=int, default=2)
     parser.add_argument("--max-rounds", type=int,
-                        help="maximum total model calls (sketch generation or Docker review)")
+                        help="maximum gap attempts; initial root review, revisions, and rechecks do not count")
     parser.add_argument("--model", help="model override for sketch generation")
     args = parser.parse_args()
     if (min(args.max_depth, args.max_nodes, args.max_revisions) < 0 or args.max_nodes < 1
@@ -258,9 +260,17 @@ def main() -> None:
            datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")).resolve()
     state = run / "state.json"
     data = json.loads(state.read_text(encoding="utf-8")) if state.exists() else initialize(run)
-    if "rounds_used" not in data:
-        data["rounds_used"] = (len(list((run / "nodes").glob("*/generate-v*.log"))) +
-                               len(list((run / "nodes").glob("*/review-v*-a*.log"))))
+    # Runs created by v1 counted every model call. Recount their child-gap
+    # attempts so --run-dir can resume them with the new meaning of a round.
+    if data.get("round_semantics") != "gap-attempts":
+        data["rounds_used"] = sum(
+            (run / "nodes" / node["id"] / "generate-v1.log").exists()
+            for node in data["nodes"].values() if node["parent"] is not None)
+        for node in data["nodes"].values():
+            if node["parent"] is not None and (run / "nodes" / node["id"] / "generate-v1.log").exists():
+                node["round_reserved"] = True
+        data["round_semantics"] = "gap-attempts"
+        data["schema"] = "recursive-sketch/v2"
     data["stop_reason"] = None
     save(state, data)
     try:
