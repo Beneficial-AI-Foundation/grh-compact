@@ -12,6 +12,8 @@ Output a **complete, compilable LaTeX document** as the sole response. It must b
 
 State the target and the main logical route. Leave steps that you judge straightforward as numbered `Gap 1`, `Gap 2`, and so on. Include at least one gap. For each gap, state all variables, hypotheses, and the exact conclusion; explain where it enters the main route. The gaps together with the allowed facts must suffice to derive the target.
 
+Put every gap in `\section*{Gaps to prove independently}`. Start each one with the exact heading `\noindent\textbf{Gap N.}`, using consecutive numbers from 1 with no repeats or skips. Put any descriptive title after the closing brace, outside the bold heading. Give each gap a nonempty statement and separate adjacent gaps with `\medskip`. Do not use another heading style for gaps. For a child gap with an exact target statement, a complete proof with zero further gaps is permitted when the caller requests it.
+
 Preserve the decisive idea of the original proof. You may use equations and standard LaTeX packages. Do not paste Lean code, tactic sequences, or a line-by-line translation. Do not assume the target, an equivalent ready-made theorem, or an unstated result. A gap may be substantial: explain its mathematical role in the main line so that a later sketch can expand it recursively. Do not silently treat a difficult step as an allowed fact.
 
 The reviewer will not see the original proof. It must be able to attempt an informal proof of every gap and then check that the full argument closes. Output only the LaTeX source, without Markdown fences or process notes.

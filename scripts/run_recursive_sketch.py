@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run bounded, resumable gap-by-gap sketch/review recursion from New.grh."""
+"""Run resumable gap-by-gap sketch/review recursion from New.grh."""
 
 from __future__ import annotations
 
@@ -10,12 +10,14 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+from sketch_format import gap_statements
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = Path(__file__).resolve().parent
-GAP = re.compile(r"\\textbf\{Gap\s+(\d+)\.\}\s*(.*?)(?=\\medskip|\\section\*|\\end\{document\}|\\textbf\{Gap\s+\d+\.)", re.S)
 
 
 def save(path: Path, data: dict) -> None:
@@ -29,11 +31,7 @@ def key(statement: str) -> str:
 
 
 def gaps_from(sketch: Path) -> dict[int, str]:
-    text = sketch.read_text(encoding="utf-8")
-    found = {int(number): body.strip() for number, body in GAP.findall(text)}
-    if len(found) != len(GAP.findall(text)):
-        raise ValueError(f"duplicate gap number in {sketch}")
-    return found
+    return gap_statements(sketch.read_text(encoding="utf-8"), allow_zero=True)
 
 
 def call(command: list[str], log: Path) -> None:
@@ -55,6 +53,22 @@ def node_dir(run: Path, identifier: str) -> Path:
     return path
 
 
+def compile_pdf(sketch: Path) -> None:
+    """Build the PDF beside its source, keeping TeX auxiliary files temporary."""
+    with tempfile.TemporaryDirectory(prefix="recursive-sketch-pdf-") as temporary:
+        result = subprocess.run(
+            ["pdflatex", "-interaction=nonstopmode", "-halt-on-error",
+             "-output-directory", temporary, str(sketch.resolve())],
+            cwd=sketch.parent, text=True, capture_output=True, timeout=120,
+        )
+        if result.returncode:
+            log = sketch.with_suffix(".pdf-build.log")
+            log.write_text(result.stdout + "\nSTDERR\n" + result.stderr, encoding="utf-8")
+            raise RuntimeError(f"PDF compilation failed; see {log}")
+        shutil.copy2(Path(temporary) / sketch.with_suffix(".pdf").name,
+                     sketch.with_suffix(".pdf"))
+
+
 def generate(node: dict, run: Path, root: dict, model: str | None) -> None:
     folder = node_dir(run, node["id"])
     version = node["version"] + 1
@@ -67,6 +81,13 @@ def generate(node: dict, run: Path, root: dict, model: str | None) -> None:
         statement = folder / "target.txt"
         statement.write_text(node["statement"] + "\n", encoding="utf-8")
         command += ["--target-statement", str(statement)]
+        parent = root["nodes"][node["parent"]]
+        parent_version = node.get("parent_version", parent["version"])
+        parent_sketch = node_dir(run, parent["id"]) / f"v{parent_version}.tex"
+        if not parent_sketch.with_suffix(".pdf").exists():
+            compile_pdf(parent_sketch)
+        command += ["--parent-pdf", f"../{parent['id']}/v{parent_version}.pdf",
+                    "--parent-gap", str(node["parent_gap"])]
     if node.get("revision_reason"):
         note = folder / f"revision-v{version}.txt"
         note.write_text(node["revision_reason"] + "\n", encoding="utf-8")
@@ -75,7 +96,41 @@ def generate(node: dict, run: Path, root: dict, model: str | None) -> None:
     if model:
         command += ["--model", model]
     call(command, folder / f"generate-v{version}.log")
-    node.update(version=version, status="review", revision_reason=None)
+    compile_pdf(sketch)
+    node.update(version=version, phase="review", revision_reason=None)
+
+
+def set_active(node: dict, phase: str) -> None:
+    node["status"] = "active"
+    node["phase"] = phase
+    node.pop("blocked_kind", None)
+
+
+def set_blocked(node: dict, kind: str, reason: str) -> None:
+    node["status"] = "blocked"
+    node["phase"] = None
+    node["blocked_kind"] = kind
+    node["reason"] = reason
+
+
+def migrate_node_states(data: dict) -> None:
+    """Keep existing runs resumable while separating status from the next phase."""
+    if data.get("schema") == "recursive-sketch/v3":
+        return
+    phases = {"sketch", "review", "expand", "recheck"}
+    for node in data["nodes"].values():
+        old = node["status"]
+        if old in phases:
+            set_active(node, old)
+        elif old in {"stuck", "budget"}:
+            set_blocked(node, "budget" if old == "budget" or
+                        node.get("reason", "").startswith("depth budget reached:") else "proof",
+                        node.get("reason", ""))
+        elif old in {"waiting", "closed"}:
+            node["phase"] = None
+        else:
+            raise ValueError(f"unknown node status: {old}")
+    data["schema"] = "recursive-sketch/v3"
 
 
 def reviewed_subtree(node: dict, nodes: dict, run: Path) -> str:
@@ -127,13 +182,13 @@ def initialize(run: Path) -> dict:
     shutil.copy2(ROOT / "summaries/New.grh.json", folder / "v1.json")
     statement = ("For every positive modulus q, Dirichlet character χ modulo q, and complex ρ "
                  "with Re ρ > 1/2, L(ρ, χ) is nonzero unless χ is principal and ρ = 1.")
-    return {"schema": "recursive-sketch/v2", "round_semantics": "gap-attempts",
+    return {"schema": "recursive-sketch/v3", "round_semantics": "gap-attempts",
             "root": "root", "source": root_meta["source"],
             "declaration": root_meta["target"], "rounds_used": 0, "stop_reason": None,
             "nodes": {
                 "root": {"id": "root", "parent": None, "parent_gap": None, "depth": 0,
                          "statement": statement, "version": 1, "revisions": 0,
-                         "status": "review", "children": {}, "reason": ""}}}
+                         "status": "active", "phase": "review", "children": {}, "reason": ""}}}
 
 
 def reserve_round(data: dict, run: Path, args: argparse.Namespace, node: dict) -> bool:
@@ -159,31 +214,40 @@ def advance(data: dict, run: Path, args: argparse.Namespace) -> bool:
         if node["status"] != "waiting":
             continue
         children = [nodes[identifier] for identifier in node["children"].values()]
-        if any(child["status"] == "stuck" for child in children):
-            node["status"] = "stuck"
-            node["reason"] = "a child gap remains unproved"
+        if any(child["status"] in {"active", "waiting"}
+               for child in children):
+            continue
+        if any(child["status"] == "blocked" for child in children):
+            set_blocked(node, "child", "a child gap remains blocked")
             return True
         if children and all(child["status"] == "closed" for child in children):
-            node["status"] = "recheck"
+            set_active(node, "recheck")
             node["reason"] = "independent upward check pending"
             return True
     for node in list(nodes.values()):
-        if node["status"] == "recheck":
+        if node["status"] != "active":
+            continue
+        phase = node["phase"]
+        if phase == "recheck":
             verdict = review(node, run, nodes)
             node["verdict"] = verdict
-            node["status"] = "closed" if verdict["parent_closes"] else "stuck"
+            if verdict["parent_closes"]:
+                node["status"] = "closed"
+                node["phase"] = None
+            else:
+                set_blocked(node, "proof", verdict["parent_reason"])
             node["reason"] = verdict["parent_reason"]
             return True
-        if node["status"] == "sketch":
+        if phase == "sketch":
             # A round is one attempt to explain a gap. The root sketch is
             # already frozen, and revisions stay within the same attempt.
             if node["parent"] is not None and node["version"] == 0 and not reserve_round(data, run, args, node):
                 return False
             generate(node, run, data, args.model)
             return True
-        if node["status"] != "review":
-            continue
-        verdict = review(node, run)
+        if phase not in {"review", "expand"}:
+            raise ValueError(f"unknown active phase: {phase}")
+        verdict = node["verdict"] if phase == "expand" else review(node, run)
         folder = node_dir(run, node["id"])
         sketch_gaps = gaps_from(folder / f"v{node['version']}.tex")
         node["verdict"] = verdict
@@ -192,32 +256,26 @@ def advance(data: dict, run: Path, args: argparse.Namespace) -> bool:
             node["revisions"] += 1
             node["revision_reason"] = "\n".join(
                 f"Gap {g['number']}: {g['reason']}" for g in incomplete)
-            node["status"] = "sketch"
+            set_active(node, "sketch")
             node["reason"] = "revising incomplete gap statements"
-            return True
-        if incomplete:
-            node["status"] = "stuck"
-            node["reason"] = "gap statements remain incomplete after revision budget"
             return True
         if verdict["parent_closes"]:
             node["status"] = "closed"
+            node["phase"] = None
             node["reason"] = verdict["parent_reason"]
             return True
-        unproved = [g for g in verdict["gaps"] if g["status"] == "unproved"]
-        if not unproved:
-            node["status"] = "stuck"
-            node["reason"] = verdict["parent_reason"]
+        unresolved = [g for g in verdict["gaps"] if g["status"] in {"unproved", "incomplete"}]
+        if not unresolved:
+            set_blocked(node, "proof", verdict["parent_reason"])
             return True
-        if node["depth"] >= args.max_depth:
-            node["status"] = "stuck"
-            node["reason"] = "depth budget reached: " + verdict["parent_reason"]
+        if args.max_depth is not None and node["depth"] >= args.max_depth:
+            set_blocked(node, "budget", "depth budget reached: " + verdict["parent_reason"])
             return True
-        needed = sum(f"{node['id']}-g{g['number']}" not in nodes for g in unproved)
-        if len(nodes) + needed > args.max_nodes:
-            node["status"] = "budget"
-            node["reason"] = "node budget reached before all child gaps could be created"
+        needed = sum(f"{node['id']}-g{g['number']}" not in nodes for g in unresolved)
+        if args.max_nodes is not None and len(nodes) + needed > args.max_nodes:
+            set_blocked(node, "budget", "node budget reached before all child gaps could be created")
             return True
-        for gap in unproved:
+        for gap in unresolved:
             number = gap["number"]
             statement = sketch_gaps[number]
             child_id = f"{node['id']}-g{number}"
@@ -229,16 +287,55 @@ def advance(data: dict, run: Path, args: argparse.Namespace) -> bool:
                 ancestors.append(key(current["statement"]))
                 current = nodes.get(current["parent"])
             if key(statement) in ancestors:
-                node["status"] = "stuck"
-                node["reason"] = f"Gap {number} repeats an ancestor statement"
+                set_blocked(node, "proof", f"Gap {number} repeats an ancestor statement")
                 return True
             nodes[child_id] = {"id": child_id, "parent": node["id"], "parent_gap": number,
+                               "parent_version": node["version"],
                                "depth": node["depth"] + 1, "statement": statement,
-                               "version": 0, "revisions": 0, "status": "sketch",
+                               "version": 0, "revisions": 0, "status": "active", "phase": "sketch",
                                "children": {}, "reason": ""}
             node["children"][str(number)] = child_id
         node["status"] = "waiting"
+        node["phase"] = None
         node["reason"] = verdict["parent_reason"]
+        return True
+    return False
+
+
+def resume_blocked(data: dict, *, requested: bool = False,
+                   max_depth: int | None = None,
+                   max_nodes: int | None = None) -> bool:
+    """Reopen a blocked leaf when requested or when its budget was increased."""
+    nodes = data["nodes"]
+    candidates = sorted(nodes.values(), key=lambda n: -n["depth"])
+    for node in candidates:
+        if node["status"] != "blocked" or node["children"] or not node.get("verdict"):
+            continue
+        reason = node.get("reason", "")
+        budget = node.get("blocked_kind") == "budget"
+        if not requested and not budget:
+            continue
+        if max_depth is not None and node["depth"] >= max_depth:
+            continue
+        if not any(g["status"] in {"unproved", "incomplete"}
+                   for g in node["verdict"]["gaps"]):
+            continue
+        if budget and reason.startswith("node budget reached"):
+            needed = sum(f"{node['id']}-g{g['number']}" not in nodes
+                         for g in node["verdict"]["gaps"]
+                         if g["status"] in {"unproved", "incomplete"})
+            if max_nodes is not None and len(nodes) + needed > max_nodes:
+                continue
+        set_active(node, "expand")
+        node["reason"] = "resuming unresolved gaps from saved review"
+        parent_id = node["parent"]
+        while parent_id:
+            parent = nodes[parent_id]
+            if parent["status"] == "blocked":
+                parent["status"] = "waiting"
+                parent["phase"] = None
+                parent.pop("blocked_kind", None)
+            parent_id = parent["parent"]
         return True
     return False
 
@@ -246,20 +343,27 @@ def advance(data: dict, run: Path, args: argparse.Namespace) -> bool:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path)
-    parser.add_argument("--max-depth", type=int, default=2)
-    parser.add_argument("--max-nodes", type=int, default=7)
+    parser.add_argument("--max-depth", type=int,
+                        help="optional maximum nesting depth (unlimited by default)")
+    parser.add_argument("--max-nodes", type=int,
+                        help="optional maximum total node count (unlimited by default)")
     parser.add_argument("--max-revisions", type=int, default=2)
     parser.add_argument("--max-rounds", type=int,
                         help="maximum gap attempts; initial root review, revisions, and rechecks do not count")
     parser.add_argument("--model", help="model override for sketch generation")
+    parser.add_argument("--resume-stuck", action="store_true",
+                        help="expand unresolved gaps in a blocked leaf using its saved review")
     args = parser.parse_args()
-    if (min(args.max_depth, args.max_nodes, args.max_revisions) < 0 or args.max_nodes < 1
+    if ((args.max_depth is not None and args.max_depth < 0)
+        or (args.max_nodes is not None and args.max_nodes < 1) or args.max_revisions < 0
         or (args.max_rounds is not None and args.max_rounds < 0)):
         parser.error("budgets must be nonnegative; max-nodes must be positive")
     run = (args.run_dir or ROOT / "summaries/recursive" /
            datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")).resolve()
     state = run / "state.json"
     data = json.loads(state.read_text(encoding="utf-8")) if state.exists() else initialize(run)
+    if not (run / "nodes/root/v1.pdf").exists():
+        compile_pdf(run / "nodes/root/v1.tex")
     # Runs created by v1 counted every model call. Recount their child-gap
     # attempts so --run-dir can resume them with the new meaning of a round.
     if data.get("round_semantics") != "gap-attempts":
@@ -270,17 +374,22 @@ def main() -> None:
             if node["parent"] is not None and (run / "nodes" / node["id"] / "generate-v1.log").exists():
                 node["round_reserved"] = True
         data["round_semantics"] = "gap-attempts"
-        data["schema"] = "recursive-sketch/v2"
+    migrate_node_states(data)
     data["stop_reason"] = None
+    while resume_blocked(data, requested=args.resume_stuck,
+                         max_depth=args.max_depth, max_nodes=args.max_nodes):
+        pass
     save(state, data)
     try:
         while advance(data, run, args):
             save(state, data)
-            print("; ".join(f"{n['id']}={n['status']}@v{n['version']}"
+            print("; ".join(f"{n['id']}={n['status']}"
+                            f"{':' + n['phase'] if n.get('phase') else ''}@v{n['version']}"
                             for n in data["nodes"].values()), flush=True)
     finally:
         save(state, data)
-        leaves = [{"id": n["id"], "status": n["status"], "reason": n["reason"]}
+        leaves = [{"id": n["id"], "status": n["status"], "phase": n.get("phase"),
+                   "reason": n["reason"]}
                   for n in data["nodes"].values() if not n["children"]]
         save(run / "summary.json", {"root_status": data["nodes"]["root"]["status"],
                                     "node_count": len(data["nodes"]),

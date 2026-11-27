@@ -6,15 +6,31 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import tempfile
 from pathlib import Path
 
 from check_sketch_words import count_words
+from sketch_format import gap_statements
 
 
 ROOT = Path(__file__).resolve().parents[1]
 PROMPT = ROOT / "scripts/prompts/latex_sketch_summarizer.md"
+
+
+def add_parent_link(sketch: str, parent_pdf: str, parent_gap: int) -> str:
+    """Add a navigation link without changing the mathematical gap statements."""
+    if not re.fullmatch(r"\.\./[A-Za-z0-9_-]+/v[1-9][0-9]*\.pdf", parent_pdf):
+        raise ValueError("parent PDF must be a sibling node's versioned PDF")
+    if parent_gap < 1:
+        raise ValueError("parent gap must be positive")
+    if r"\usepackage{hyperref}" not in sketch:
+        sketch = sketch.replace(r"\begin{document}",
+                                "\\usepackage{hyperref}\n\\begin{document}", 1)
+    link = (f"\\noindent\\href{{{parent_pdf}}}"
+            f"{{Back to parent sketch (Gap {parent_gap})}}\\par\\medskip\n")
+    return sketch.replace(r"\begin{document}", r"\begin{document}" + "\n" + link, 1)
 
 
 def sha256(data: bytes) -> str:
@@ -32,9 +48,13 @@ def main() -> None:
     parser.add_argument("--revision-note", type=Path,
                         help="specific defects to repair in a new sketch version")
     parser.add_argument("--prior-sketch", type=Path, help="previous sketch to revise")
+    parser.add_argument("--parent-pdf", help="relative PDF of the sketch containing this gap")
+    parser.add_argument("--parent-gap", type=int, help="gap number in the parent sketch")
     parser.add_argument("--model", help="Codex model override")
     parser.add_argument("--dry-run", action="store_true", help="print prompt without running Codex")
     args = parser.parse_args()
+    if (args.parent_pdf is None) != (args.parent_gap is None):
+        parser.error("--parent-pdf and --parent-gap must be given together")
 
     source = args.source.resolve()
     if not source.is_file() or not source.is_relative_to(ROOT):
@@ -79,6 +99,9 @@ def main() -> None:
         sketch = draft.read_text(encoding="utf-8").strip()
         if not sketch.startswith("\\documentclass") or "\\end{document}" not in sketch:
             raise ValueError("summarizer did not produce a complete LaTeX document")
+        if args.parent_pdf is not None:
+            sketch = add_parent_link(sketch, args.parent_pdf, args.parent_gap)
+        gap_statements(sketch, allow_zero=bool(statement))
         word_count = count_words(sketch)
         if word_count > 500:
             raise ValueError(f"sketch exceeds 500 English prose words: {word_count}")

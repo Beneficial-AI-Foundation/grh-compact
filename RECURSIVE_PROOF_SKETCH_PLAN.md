@@ -18,9 +18,11 @@
 
 ## 自动调度器（2026-11-26 新增）
 
-`scripts/run_recursive_sketch.py` 从已冻结的 `New.grh` 草图启动；单次命令自动完成结构化 Docker 复核、因陈述不完整引起的草图修订、实质未证 gap 的子草图生成、子节点复核和向上拼接复核。运行状态、每个版本的源材料、输入输出和失败记录保存在 `summaries/recursive/<时间戳>/`，中断后用 `--run-dir` 指向该目录续跑。默认限制深度 2、节点 7 个、每节点修订 2 次；到达预算时留下未闭合状态，不报告成功。依赖环采用规范化语句哈希检测；数学等价但文字不同的循环仍需复核者识别。
+`scripts/run_recursive_sketch.py` 从已冻结的 `New.grh` 草图启动；单次命令自动完成结构化 Docker 复核、因陈述不完整引起的草图修订、实质未证 gap 的子草图生成、子节点复核和向上拼接复核。运行状态、每个版本的源材料、输入输出、PDF 和失败记录保存在 `summaries/recursive/<时间戳>/`，中断后用 `--run-dir` 指向该目录续跑。深度与节点数默认不限，可用 `--max-depth` 和 `--max-nodes` 设置上限；每节点默认最多修订 2 次。到达预算时留下未闭合状态，不报告成功。增加预算后可以续跑被预算阻塞的叶节点；`--resume-stuck` 可按已保存的复核结论重新展开其他被阻塞的叶节点。依赖环采用规范化语句哈希检测；数学等价但文字不同的循环仍需复核者识别。
 
 运行命令：`python scripts/run_recursive_sketch.py`。这个入口会调用 Codex 生成草图、用 Docker 启动独立复核，故需要可用的 Codex 登录凭据、Docker 守护进程及模型网络访问。`summary.json` 给出根状态与叶子；`state.json` 保存节点图。自动复核仅证明流程按预算执行，不保证 AI 实际补出缺失的数学证明。
+
+新生成的草图会编译为同名 PDF，子草图含返回父草图的链接。已有运行记录可用 `python scripts/backfill_recursive_sketch_pdfs.py summaries/recursive/<时间戳>` 补建带导航链接的 PDF；原 LaTeX 草图和复核记录保持不变。
 
 可用 `--max-rounds N` 限制一次运行累计尝试的子缺口数量：每个子缺口首次生成草图时计一轮；根草图复核、子节点复核、修订和父节点重新复核均不另计。计数在首次生成前写入 `state.json`，失败后重试仍属于同一轮；达到上限时保存 `stop_reason` 和未完成节点，不把它们标为已证明。续跑时使用 `--run-dir` 指向同一目录，并把 `--max-rounds` 设为更大的**累计**上限。旧版运行目录会按已有子缺口生成日志换算计数。例如 `python scripts/run_recursive_sketch.py --max-rounds 4`；续跑同一目录可用 `python scripts/run_recursive_sketch.py --run-dir summaries/recursive/<时间戳> --max-rounds 8`。
 

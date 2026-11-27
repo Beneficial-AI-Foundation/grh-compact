@@ -13,6 +13,8 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+from sketch_format import gap_statements
+
 
 ROOT = Path(__file__).resolve().parents[1]
 CODEX_BINARY = (Path.home() / ".npm-global/lib/node_modules/@openai/codex/node_modules/"
@@ -44,6 +46,8 @@ def main() -> None:
     metadata = json.loads(args.metadata.read_text(encoding="utf-8"))
     if digest(sketch_bytes) != metadata["sketch_sha256"]:
         parser.error("sketch differs from frozen metadata")
+    expected = list(gap_statements(sketch_bytes.decode("utf-8"),
+                                   allow_zero=bool(metadata.get("target_statement_sha256"))))
     if not CODEX_BINARY.is_file() or not CODE_MODE_HOST.is_file() or not AUTH.is_file():
         parser.error("local Codex binaries or account authentication are missing")
 
@@ -141,8 +145,6 @@ REVIEWED CHILD PROOFS (if any)
                 if answer.startswith("```"):
                     answer = re.sub(r"^```(?:json)?\s*|\s*```$", "", answer).strip()
                 verdict = json.loads(answer)
-                expected = [int(n) for n in re.findall(r"\\textbf\{Gap\s+(\d+)\.",
-                                                       sketch_bytes.decode("utf-8"))]
                 gaps = verdict["gaps"]
                 if (sorted(g["number"] for g in gaps) != sorted(expected)
                     or len(gaps) != len(expected)
